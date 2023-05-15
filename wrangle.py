@@ -59,7 +59,7 @@ def is_it_null(df_name):
         print(f"{df_name[col].isna().value_counts()}") 
 #call should be: wrg.is_it_null(df_name)  
 
-#General function to fix column names, drop NaNs,change floats to ints, and drop outliers
+#A function specific to zillow to fix column names, drop NaNs,change floats to ints, and drop outliers
 def wrangle_zillow(df):
     df = df.rename(columns = {'bedroomcnt':'bedrooms',
                      'bathroomcnt':'bathrooms',
@@ -154,8 +154,16 @@ def plot_categorical_and_target_var(df_train_name, target, cat_count=4): #this d
         print()
         
 
+#plots pairplots 
+def pairplot_everything(df_train_name, cat):
+    #df_train_name = df_train_name.sample(10000, random_state=123) #this is for sampling the data frame
+    sns.pairplot(data=df_train_name, corner=True, hue=cat)
 
-
+def corr_heatmap(df_train_name):
+    #df_train_name = df_train_name.sample(10000, random_state=123) #this is for sampling the data frame
+    plt.figure(figsize=(12,10))
+    sns.heatmap(df_train_name.corr(), cmap='Blues', annot=True, linewidth=0.5, mask= np.triu(df_train_name.corr())) 
+    plt.show()  
 
 #This function is for running through catagorical on catagorical features graphing and running the chi2 test on them (by Alexia)
 def cat_on_cat_graph_loop(dataframe_train_name, col_cat, target_ver, target_ver_column_name):
@@ -203,49 +211,6 @@ def chi2Test(observed):
 # prep.chi2Test(observed) is the call 
 
 
-#This plots all cont and target with with charts
-'''def plot_categorical_and_continuous(df_train_name, target, cat_count=4):
 
-    col_cat, col_num = cat_and_num_lists(df_train_name, cat_count)
+ 
 
-    #df_train_name = df_train_name.sample(100000, random_state=123) #this is for sampling the data frame
-    for col in col_num:
-        sns.barplot(x=df_train_name[col], y=df_train_name[target])
-        plt.title(f"{col.lower().replace('_',' ')} vs {target}")
-        plt.show()'''
-
-'''for col in col_num:
-        sns.catplot(data=df_train_name, x=df_train_name[cat], y=df_train_name[col] , kind="box")
-        plt.show()'''
-
-
-
-'''for col in col_num:
-        sns.catplot(data=df_train_name, x=df_train_name[cat], y=df_train_name[col], kind="violin", color=".9", inner=None) #this takes a sec
-        sns.swarmplot(data=df_train_name, x=df_train_name[cat], y=df_train_name[col], size=3)
-        plt.show() '''
-            
-
-'''def get_column(df_train_name):
-    for col in df_train_name.columns[0:21]:
-        col'''
-
-'''def plot_all(df_train_name):
-    df_train_name = df_train_name.sample(100000, random_state=123) #this is for sampling the data frame
-    for col in df_train_name.columns[0:21]:
-        sns.barplot(y=df_train_name[col], x=df_train_name[get_column(df_train_name)])
-        plt.title(f"{col.lower().replace('_',' ')} vs ")
-        plt.show()'''
-
-#plots pairplots 
-def pairplot_everything(df_train_name, cat):
-    #df_train_name = df_train_name.sample(10000, random_state=123) #this is for sampling the data frame
-    sns.pairplot(data=df_train_name, corner=True, hue=cat)
-
-def corr_heatmap(df_train_name):
-    #df_train_name = df_train_name.sample(10000, random_state=123) #this is for sampling the data frame
-    plt.figure(figsize=(12,10))
-    sns.heatmap(df_train_name.corr(), cmap='Blues', annot=True, linewidth=0.5, mask= np.triu(df_train_name.corr())) 
-    plt.show()   
-
-    
