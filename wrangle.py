@@ -16,6 +16,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import plot_tree
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 
 import env
 
@@ -117,7 +118,7 @@ def cat_and_num_lists(df_train_name, cat_count):
     col_num = [] #this is for my numeric varibles
 
     for col in df_train_name.columns[0:]:
-        print(col)
+        
         if df_train_name[col].dtype == 'O':
             col_cat.append(col)
         else:
@@ -125,10 +126,13 @@ def cat_and_num_lists(df_train_name, cat_count):
                 col_cat.append(col)
             else:
                 col_num.append(col)
+    print(f"The categorical variables are: \n {col_cat} \n") 
+    print(f"The continuous variables are: \n {col_num} \n")
+
     return col_cat , col_num           
 #the call for this should be: wrg.cat_and_num_lists(df_train_name)
 
-#plots all pairwise relationships along with the regression line
+#plots all pairwise relationships along with the regression line (continuous variables against continuous target)
 def plot_variable_target_pairs(df_train_name,target_var, cat_count=4):
 
     #df_train_name = df_train_name.sample(100000, random_state=123) #this is for sampling the data frame
@@ -143,7 +147,7 @@ def plot_variable_target_pairs(df_train_name,target_var, cat_count=4):
           line_kws={'color':'red'})
         plt.show()
 
-#This plots all categorical variables against the target variable
+#This plots all categorical variables against the target variable when target is continuous
 def plot_categorical_and_target_var(df_train_name, target, cat_count=4): #this defaults to 4 unique values
     col_cat, col_num = cat_and_num_lists(df_train_name, cat_count)
     for col in col_cat:
@@ -158,6 +162,7 @@ def plot_categorical_and_target_var(df_train_name, target, cat_count=4): #this d
 def pairplot_everything(df_train_name, cat):
     #df_train_name = df_train_name.sample(10000, random_state=123) #this is for sampling the data frame
     sns.pairplot(data=df_train_name, corner=True, hue=cat)
+    plt.show()
 
 def corr_heatmap(df_train_name):
     #df_train_name = df_train_name.sample(10000, random_state=123) #this is for sampling the data frame
@@ -165,7 +170,7 @@ def corr_heatmap(df_train_name):
     sns.heatmap(df_train_name.corr(), cmap='Blues', annot=True, linewidth=0.5, mask= np.triu(df_train_name.corr())) 
     plt.show()  
 
-#This function is for running through catagorical on catagorical features graphing and running the chi2 test on them (by Alexia)
+#This function is for running through catagorical features and catagorical target var graphing and running the chi2 test on them (by Alexia)
 def cat_on_cat_graph_loop(dataframe_train_name, col_cat, target_ver, target_ver_column_name):
     for col in col_cat:
         print()
@@ -210,7 +215,73 @@ def chi2Test(observed):
         print ("We fail to reject the null hypothesis.")
 # prep.chi2Test(observed) is the call 
 
+#a function that tests for normality of target variable using the Shapiro-Wilk test
+def normality_test(df_train_name, target_var):
+    alpha = 0.05
+    stat, p = stats.shapiro(df_train_name[target_var])
+    print(f'Statistics={stat}, p={p}' )
+    if p > alpha:
+        print('The data is normally distributed (fail to reject H0)')
+    else:
+        print('The sample is NOT normally distributed (reject H0)')
 
 
- 
+#This funcition runs through the continuous varaibles and the continuous target variable and runs the pearsonr test on them
+def pearsonr_loop(df_train_name, target_var, cat_count=4):
+    alpha = 0.05
+    col_cat, col_num = cat_and_num_lists(df_train_name, cat_count)
+    for col in col_num:
+        sns.regplot(x=df_train_name[col], y=df_train_name[target_var], data=df_train_name, line_kws={"color": "red"})
+        plt.title(f"{col.lower().replace('_',' ')} vs {target_var}")
+        plt.show()
+        print(f"{col.upper()} and {target_var}")
+        corr, p = stats.pearsonr(df_train_name[col], df_train_name[target_var])
+        print(f'corr = {corr}')
+        print(f'p = {p}')
+        if p < alpha:
+            print('We reject the null hypothesis, there is a linear relationship between the variables\n')
+        else:
+            print('We fail to reject the null hypothesis, there is not a linear relationship between the variables\n') 
+        
 
+
+#This function runs through the continuous variables and the continuous target variable and runs the spearman test on them
+def spearman_loop(df_train_name, target_var, cat_count=4):
+    alpha = 0.05
+    col_cat, col_num = cat_and_num_lists(df_train_name, cat_count)
+    for col in col_num:
+        sns.regplot(x=df_train_name[col], y=df_train_name[target_var], data=df_train_name, line_kws={"color": "red"})
+        plt.title(f"{col.lower().replace('_',' ')} vs {target_var}")
+        plt.show()
+        print(f"{col.upper()} and {target_var}")
+        corr, p = stats.spearmanr(df_train_name[col], df_train_name[target_var])
+        print(f'corr = {corr}')
+        print(f'p = {p}')
+        if p < alpha:
+            print('We reject the null hypothesis, there is a linear relationship between the variables\n')
+        else:
+            print('We fail to reject the null hypothesis, there is not a linear relationship between the variables\n')    
+
+#This function takes the data and scales it using the MinMaxScaler
+def scale_data(train, validate, test):
+    to_scale=train.columns.tolist()
+
+    #make copies for scaling
+    train_scaled = train.copy()
+    validate_scaled = validate.copy()
+    test_scaled = test.copy()
+
+    #this scales stuff 
+    #make the thing
+    scaler = MinMaxScaler()
+
+    #fit the thing
+    scaler.fit(train[to_scale])
+
+    #use the thing
+    train_scaled[to_scale] = scaler.transform(train[to_scale])
+    validate_scaled[to_scale] = scaler.transform(validate[to_scale])
+    test_scaled[to_scale] = scaler.transform(test[to_scale])
+    
+    return train_scaled, validate_scaled, test_scaled 
+# call should be train_scaled, validate_scaled, test_scaled = wrg.scale_data(x_train, x_validate, x_test)
