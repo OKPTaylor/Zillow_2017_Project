@@ -38,8 +38,7 @@ def auto_regress( y_train, train_df, x_train_scaled, x_validate_scaled, y_valida
     def regression_errors(y, yhat):
         '''
         Returns the following values:
-        mean squared error (MSE)
-        root mean squared error (RMSE)
+        root mean squared error (RMSE) and r-squared (R2)
         '''
         #import
         
@@ -180,7 +179,7 @@ def auto_regress( y_train, train_df, x_train_scaled, x_validate_scaled, y_valida
         print("\n")
         print("The best model is the", metric_df.loc[metric_df['RMSE'].idxmin()][0], "model\n")
         
-        #plot actuals vs predicted
+        '''#plot actuals vs predicted
         plt.figure(figsize=(16,8))
         plt.plot(y_validate, y_validate, color='gray', label='Perfect Model')
         
@@ -193,7 +192,7 @@ def auto_regress( y_train, train_df, x_train_scaled, x_validate_scaled, y_valida
         plt.xlabel("Actual")
         plt.ylabel("Predicted")
         plt.title("Actual vs. Predicted")
-        plt.show()
+        plt.show()'''
 
     ''' 
        #plot residuals
