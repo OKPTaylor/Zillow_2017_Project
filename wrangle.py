@@ -17,6 +17,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import plot_tree
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
+from sklearn.metrics import  mean_squared_error
+from math import sqrt
 
 import env
 
@@ -63,21 +65,55 @@ def is_it_null(df_name):
 #A function specific to zillow to fix column names, drop NaNs,change floats to ints, and drop outliers
 def wrangle_zillow(df):
     df = df.rename(columns = {'bedroomcnt':'bedrooms',
-                     'bathroomcnt':'bathrooms',
-                     'calculatedfinishedsquarefeet':'area',
-                     'taxvaluedollarcnt':'value',
+                    'bathroomcnt':'bathrooms',
+                    'calculatedfinishedsquarefeet':'area',
+                    'taxvaluedollarcnt':'value',
+                    'yearbuilt':'year_built',
+                    
                      })
     
     df = df.dropna()
     
-    make_ints = ['bedrooms','area','value']
-
+    make_ints = ['bedrooms','area','value','year_built']
+    #creats a column that is the sum of the number of bedrooms and bathrooms
+    df['total_rooms'] = df['bedrooms'] + df['bathrooms']
+    
+ 
     for col in make_ints:
         df[col] = df[col].astype(int)
                
     df = df [df.area < 25_000].copy()
     df = df[df.value < df.value.quantile(.95)].copy()
-    df = df.drop(columns=['Unnamed: 0'])
+    # drops "Unnamed: 0" column only if it is in the dataframe
+    if 'Unnamed: 0' in df.columns:
+        df.drop(columns=['Unnamed: 0'])
+
+    return df
+
+def wrangle_zillow2(df):
+    df = df.rename(columns = {'bedroomcnt':'bedrooms',
+                    'bathroomcnt':'bathrooms',
+                    'calculatedfinishedsquarefeet':'area',
+                    'taxvaluedollarcnt':'value',
+                    'yearbuilt':'year_built',
+                    
+                     })
+    
+    df = df.dropna()
+    
+    make_ints = ['bedrooms','area','value','year_built']
+    #creats a column that is the sum of the number of bedrooms and bathrooms
+    df['total_rooms'] = df['bedrooms'] + df['bathrooms']
+    #creats a column with value broken into buckets
+    df['value_bins'] = pd.cut(df.value, bins=[0, 100_000, 200_000, 300_000, 400_000, 500_000, 600_000, 700_000, 800_000, 900_000, 1_000_000, 2_000_000, 3_000_000, 4_000_000, 5_000_000], labels=['<100k', '100k-200k', '200k-300k', '300k-400k', '400k-500k', '500k-600k', '600k-700k', '700k-800k', '800k-900k', '900k-1M', '1M-2M', '2M-3M', '3M-4M', '4M-5M'])
+ 
+    for col in make_ints:
+        df[col] = df[col].astype(int)
+               
+    df = df [df.area < 25_000].copy()
+    #saves everything below the 95th percentile
+    df = df[df.value < df.value.quantile(.90)].copy()
+    
 
     return df
 
@@ -248,7 +284,7 @@ def pearsonr_loop(df_train_name, target_var, cat_count=4):
 #This function runs through the continuous variables and the continuous target variable and runs the spearman test on them
 def spearman_loop(df_train_name, target_var, cat_count=4):
     alpha = 0.05
-    col_cat, col_num = cat_and_num_lists(df_train_name, cat_count)
+    col_num = ['bathrooms', 'area','total_rooms']
     for col in col_num:
         sns.regplot(x=df_train_name[col], y=df_train_name[target_var], data=df_train_name, line_kws={"color": "red"})
         plt.title(f"{col.lower().replace('_',' ')} vs {target_var}")
@@ -285,3 +321,4 @@ def scale_data(train, validate, test):
     
     return train_scaled, validate_scaled, test_scaled 
 # call should be train_scaled, validate_scaled, test_scaled = wrg.scale_data(x_train, x_validate, x_test)
+
